@@ -127,7 +127,28 @@ touch "$TARGET_SKILL/.skill-opt/rejection-buffer-permanent.yaml"
 
 > **このフェーズを飛ばすと後段は全部無駄になる。** μ_f(採点関数)が壊れた状態で勾配を計算しても、誤った方向にスキルが歪んでいくだけ。
 
-### B-1. test_cases を 5〜10 件、手で書き出す
+### B-0. pilot_mode を選ぶ
+
+「触ってみるだけ」と「本格運用」では立ち上げ投資を変える。
+
+| pilot_mode | test_cases | max_iter | n_minibatches | 立ち上げ目安 | 使いどころ |
+|---|---|---|---|---|---|
+| `minimal` | 6 (train 4 / val 2) | 2 | 2 | 1〜2 時間 | 効きそうか先に確認したい / お試し |
+| `full` | 12 (train 8 / val 4) | 3 | 4 | 3〜5 時間 | 本格運用、継続改善 |
+
+**推奨フロー**:
+
+```
+まず minimal で 1〜2 時間 → 手応えがあれば full に格上げ
+                          → 手応えゼロなら手動チューニングに戻る or 別アプローチ
+```
+
+minimal でも **permanent buffer は通常通り更新する** ので、後で full に移行したときに学びが
+引き継げる。「お試し、ただしお試しも長期成果に寄与させる」設計。
+
+### B-1. test_cases を書き出す
+
+`examples/pilot-template.md` の構造を雛形に、対象スキルディレクトリ配下に作成:
 
 `examples/pilot-template.md` の構造を雛形に、対象スキルディレクトリ配下に作成:
 
@@ -188,7 +209,7 @@ Claude Code セッションで:
 - [ ] Red flags(後述)に該当する提案が混ざっていない
 - [ ] permanent buffer の `coach_instruction` 候補になりそうな「明らかに効かない」提案が混ざっていない
 
-全て ✅ なら本ループ Go。1 つでも ❌ なら `coach_meta_prompt_v0.md` を直して再試行。
+全て ✅ なら本ループ Go。1 つでも ❌ なら `coach_meta_prompt.md` を直して再試行。
 
 ### B-5. コスト試算
 
@@ -211,7 +232,7 @@ Claude Code セッションで:
 ```
 $TARGET_SKILL/.skill-opt/
 ├── feedback_spec.md            ← μ_f の最終仕様
-├── coach_meta_prompt_v0.md     ← コーチへの初期指示
+├── coach_meta_prompt.md     ← コーチへの初期指示
 └── pilot_report.md             ← 一致度 + コスト試算 + Go/No-Go 判定
 ```
 
@@ -223,13 +244,15 @@ $TARGET_SKILL/.skill-opt/
 
 ```yaml
 # $TARGET_SKILL/.skill-opt/run_config.yaml
-target_skill_path:   /abs/path/to/.claude/skills/<対象>/SKILL.md
-test_cases_path:     /abs/path/to/.claude/skills/<対象>/examples/test_cases.md
-feedback_spec_path:  /abs/path/to/.claude/skills/<対象>/.skill-opt/feedback_spec.md
-max_iterations: 3
+target_skill_path:       /abs/path/to/.claude/skills/<対象>/SKILL.md
+test_cases_path:         /abs/path/to/.claude/skills/<対象>/examples/test_cases.md
+feedback_spec_path:      /abs/path/to/.claude/skills/<対象>/.skill-opt/feedback_spec.md
+coach_meta_prompt_path:  /abs/path/to/.claude/skills/<対象>/.skill-opt/coach_meta_prompt.md
+pilot_mode: full         # minimal で立ち上げ、後で full に格上げが推奨
+max_iterations: 3        # minimal なら 2
 edit_budget: 4
 acceptance_margin: 5
-n_minibatches: 4
+n_minibatches: 4         # minimal なら 2
 ```
 
 ### C-2. Claude Code から起動
@@ -383,7 +406,7 @@ jq -s '[.[].rubric_scores] | transpose | map({item: .[0].id, scores: map(.score)
 
 ### 裏技 4: コーチへのメタプロンプトを「却下バッファから自動再生成」
 
-`coach_meta_prompt_v0.md` を手で書き直すのは面倒。代わりに **却下バッファを LLM に読ませて差分追記** させる:
+`coach_meta_prompt.md` を手で書き直すのは面倒。代わりに **却下バッファを LLM に読ませて差分追記** させる:
 
 ```bash
 claude -p "以下の coach_meta_prompt_v_previous.md と
@@ -628,7 +651,7 @@ sonnet → opus 等でモデルを切り替えると、同じスキルでも μ_
 - [ ] 人間直感との一致率が 90% 以上
 - [ ] コーチ手動起動で編集案が妥当
 - [ ] コスト試算が予算内
-- [ ] feedback_spec.md / coach_meta_prompt_v0.md / pilot_report.md を確定
+- [ ] feedback_spec.md / coach_meta_prompt.md / pilot_report.md を確定
 
 ### Phase C: 本ループ
 
