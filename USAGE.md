@@ -109,17 +109,14 @@ touch "$TARGET_SKILL/.skill-opt/rejection-buffer-permanent.yaml"
 ### A-3. .gitignore の方針
 
 ```gitignore
-# 含める(長期資産)
-# .claude/skills/<対象skill名>/.skill-opt/baseline.md
-# .claude/skills/<対象skill名>/.skill-opt/changelog.md
-# .claude/skills/<対象skill名>/.skill-opt/rejection-buffer-permanent.yaml
-# .claude/skills/<対象skill名>/.skill-opt/coach_meta_prompt_v*.md
-# .claude/skills/<対象skill名>/.skill-opt/feedback_spec.md
-
-# 除外(per-run データ)
+# per-run データのみ除外(長期資産は通常通り git 管理に含める)
 .claude/skills/*/.skill-opt/rejection-buffer-run.yaml
-.claude/skills/*/.skill-opt/.tmp-*/
+.claude/skills/*/.skill-opt/.tmp-iter-*/
 ```
+
+長期資産(`baseline.md` / `changelog.md` / `rejection-buffer-permanent.yaml` /
+`coach_meta_prompt.md` / `feedback_spec.md` / `pilot_report.md`)は何も書かなければ通常通り
+コミット対象になる。これらが履歴に残ることが「育つ知識ベース」の正体。
 
 ---
 
@@ -147,8 +144,6 @@ minimal でも **permanent buffer は通常通り更新する** ので、後で 
 引き継げる。「お試し、ただしお試しも長期成果に寄与させる」設計。
 
 ### B-1. test_cases を書き出す
-
-`examples/pilot-template.md` の構造を雛形に、対象スキルディレクトリ配下に作成:
 
 `examples/pilot-template.md` の構造を雛形に、対象スキルディレクトリ配下に作成:
 

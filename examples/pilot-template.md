@@ -10,7 +10,7 @@
 
 1. **`μ_f`(採点関数)を確定**して `feedback_spec.md` に固定する
 2. **test_cases の最小セット**を作って、後段の本ループが回せる粒度にする
-3. **コーチへの初期メタプロンプト**を `coach_meta_prompt_v0.md` として用意する
+3. **コーチへの初期メタプロンプト**を `coach_meta_prompt.md` として用意する
 
 これらが揃って初めて、Step 0 以降の本ループに進める。
 
@@ -124,10 +124,10 @@ scoring:
 
 ---
 
-## 3. コーチへの初期メタプロンプト(coach_meta_prompt_v0.md)
+## 3. コーチへの初期メタプロンプト(coach_meta_prompt.md)
 
 ```markdown
-# Coach Meta Prompt v0
+# Coach Meta Prompt
 
 あなたは <対象スキル> のオプティマイザです。以下の方針を恒久遵守してください。
 

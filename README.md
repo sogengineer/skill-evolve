@@ -135,7 +135,9 @@ flowchart TD
     class REJ reject
 ```
 
-ループ構造は単純な **「内ループのみ」**(エポック境界やメタ最適化は v2 で別 SKILL に分離)。Step 1 〜 7 を `max_iterations` 回まで繰り返し、終了時に Step 9 で棄却バッファを昇格させる。
+ループ本体は Step 1〜7 を `max_iterations` 回まで繰り返す。**Step 8(安全装置)は各イテレーション
+開始時に横断的に作動** し、baseline 下回りを検出したら直前の編集をロールバックする。
+**Step 9(棄却バッファ昇格)はループ停止後に 1 回だけ実行** され、次セッションへの長期記憶として残る。
 
 ---
 
@@ -328,7 +330,8 @@ n_minibatches: 4             # minimal なら 2
 ...
 ```
 
-最低 **8 ケース推奨**(train 6 / validation 2)、できれば 12 ケース(train 8 / validation 4)。
+test_cases の数は `pilot_mode` に従う:`minimal` なら **6 ケース**(train 4 / val 2)、
+`full` なら **12 ケース**(train 8 / val 4)。`[critical]` を最低 1 つ含めること。
 
 ---
 
@@ -336,15 +339,17 @@ n_minibatches: 4             # minimal なら 2
 
 ```
 <target_skill ディレクトリ>/
-├── SKILL.md                              ← 進化済み(本体、visible)
-└── .skill-opt/                           ← skill-evolve の runtime データ
-    ├── baseline.md                       ← 起点バックアップ
-    ├── changelog.md                      ← 全イテレーションの採用編集 + メトリクス推移
-    ├── rejection-buffer-run.yaml         ← この実行の却下案
-    ├── rejection-buffer-permanent.yaml   ← 恒久的失敗パターン(削除厳禁)
-    ├── feedback_spec.md                  ← Step -1 で確定した μ_f 仕様
-    ├── coach_meta_prompt.md         ← コーチへのメタ指示
-    └── pilot_report.md                   ← Step -1 の人間判断との一致度
+├── SKILL.md                                  ← 進化済み(本体、visible)
+└── .skill-opt/                               ← skill-evolve の runtime データ
+    ├── baseline.md                           ← 起点バックアップ
+    ├── changelog.md                          ← 全イテレーションの採用編集 + メトリクス推移
+    ├── rejection-buffer-run.yaml             ← この実行の却下案
+    ├── rejection-buffer-permanent.yaml       ← 恒久的失敗パターン + structural_defects(削除厳禁)
+    ├── feedback_spec.md                      ← Step -1 で確定した μ_f 仕様
+    ├── coach_meta_prompt.md                  ← コーチへのメタ指示(1 ファイル固定)
+    ├── pilot_report.md                       ← Step -1 の人間判断との一致度
+    └── .tmp-iter-<N>/                        ← per-iteration の作業ディレクトリ(次イテで上書き)
+        └── structural_themes_for_promotion.yaml  ← コーチが分離した structural テーマ
 ```
 
 `.skill-opt/` はドット先頭で `ls` のデフォルト表示から外れる(`.git/` と同じ慣例)。target ディレクトリ本体は SKILL.md のみを visible に保ち、他のスキルと同じ "見た目" を維持する。
