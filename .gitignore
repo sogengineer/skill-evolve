@@ -1,0 +1,13 @@
+# per-run skill-opt artifacts (transient; regenerated each run)
+.skill-opt/rejection-buffer-run.yaml
+.skill-opt/.tmp-*/
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# logs
+*.log
